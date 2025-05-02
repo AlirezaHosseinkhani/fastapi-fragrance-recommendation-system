@@ -36,7 +36,7 @@ preferences.
 
 #
 
-    GROQ_API_KEY=YOUR_API_KEY
+    GROQ_API_KEY="YOUR_API_KEY"
     LLM_MODEL_NAME="YOUR_LLM_NAME" (Ex: meta-llama/llama-4-maverick-17b-128e-instruct)
     LLM_TEMPERATURE=0.3
 
