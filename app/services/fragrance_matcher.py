@@ -1,12 +1,12 @@
 from typing import Dict, Any
 
-from app.database import FRAGRANCE_DATABASE, PERSONALITY_TONES
+from app.database import FRAGRANCE_DATABASE
 
 
 class FragranceMatcher:
     def __init__(self):
         self.database = FRAGRANCE_DATABASE
-        self.personality_tones = PERSONALITY_TONES
+        # self.personality_tones = PERSONALITY_TONES
 
     def determine_personality(self, quiz_answers: Dict[str, Any]) -> str:
         """Determine the dominant personality type based on quiz answers"""

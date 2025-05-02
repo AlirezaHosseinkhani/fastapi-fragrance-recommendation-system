@@ -1,9 +1,9 @@
-from app.database import PERSONALITY_TONES, FRAGRANCE_DATABASE
+from app.database import FRAGRANCE_DATABASE
 
 
 class Storyteller:
     def __init__(self):
-        self.tones = PERSONALITY_TONES
+        # self.tones = PERSONALITY_TONES
         self.database = FRAGRANCE_DATABASE
 
     def generate_story(self, user_name: str, personality: str, fragrance_match: dict) -> dict:
