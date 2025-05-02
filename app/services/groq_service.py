@@ -15,7 +15,7 @@ class GroqService:
     def __init__(self):
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
         self.base_url = "https://api.groq.com/openai/v1/chat/completions"
-        self.model = os.getenv("LLM_MODEL_NAME")
+        self.model = os.getenv("LLM_MODEL_NAME", "llama3-70b-8192")
 
     async def enhance_story(self, user_language: str, user_name: str, personality: str, fragrance_data: dict) -> dict:
         """Generate a poetic, layered fragrance experience in the user's language"""
@@ -43,13 +43,13 @@ class GroqService:
             - Complementary fragrances: {', '.join(secondary_skus)}
             - Best worn: {best_wearing_time}
             - Ideal season: {ideal_season}
-            - Mood evoked: {', '.join(mood)}
+            - Mood evoked: {', '.join(mood if isinstance(mood, list) else [mood])}
 
             The response must be a JSON object with these keys:
             1. greeting: A poetic introduction that celebrates their personality and invites them into the story.
             2. fragrance_trio: A dictionary with three keys (anchor, mixer, accent), each describing:
                 - name: the fragrance name (from the inputs)
-                - description: 3–4 sentences capturing the mood and personality of each fragrance
+                - description: 2--3 sentences capturing the mood and personality of each fragrance
             3. layering_recipes: A list of two blend options. Each recipe must include:
                 - name: a poetic name for the blend
                 - composition: {{"{main_sku}": "2 shuts", "{secondary_skus[0]}": "1 shut"}} format
@@ -67,7 +67,7 @@ class GroqService:
                     {"role": "user", "content": user_prompt.strip()}
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.3,
+                temperature=float(os.getenv("LLM_TEMPERATURE", 0.3)),
                 max_tokens=1024
             )
 
@@ -79,5 +79,5 @@ class GroqService:
                 "data": parsed
             }
         except Exception as e:
-            print(f"Error with Groq service: {e}")
+            logger.error(f"Error with Groq service: {e}")
             return {"status": "error", "message": str(e)}

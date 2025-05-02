@@ -1,9 +1,12 @@
+# app/services/recommendation.py
+
 from typing import Dict
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.models import UserInput, RecommendationResponse, RecommendationData
 from app.services.fragrance_matcher import FragranceMatcher
+from app.services.groq_recommender import GroqRecommender
 from app.services.groq_service import GroqService
 from app.services.storytelling import Storyteller
 
@@ -13,16 +16,20 @@ router = APIRouter(
 )
 
 
-def get_fragrance_matcher():
-    return FragranceMatcher()
+def get_groq_service():
+    return GroqService()
+
+
+def get_groq_recommender(groq_service: GroqService = Depends(get_groq_service)):
+    return GroqRecommender(groq_service=groq_service)
 
 
 def get_storyteller():
     return Storyteller()
 
 
-def get_groq_service():
-    return GroqService()
+def get_fragrance_matcher():
+    return FragranceMatcher()
 
 
 @router.get("/welcome", response_model=Dict[str, str])
@@ -107,6 +114,54 @@ async def get_quiz_questions():
     summary="Generate a personalized fragrance recommendation",
 )
 async def get_recommendation(
+        user_input: UserInput,
+        groq_recommender: GroqRecommender = Depends(get_groq_recommender),
+        groq_service: GroqService = Depends(get_groq_service),
+        storyteller: Storyteller = Depends(get_storyteller),
+):
+    """Generate a personalized fragrance recommendation with Groq-enhanced matching and storytelling"""
+    try:
+        # Convert Pydantic model to dict
+        quiz_answers = user_input.quiz_answers.dict()
+
+        # Use Groq AI to match fragrances & determine personality
+        fragrance_match = await groq_recommender.match_fragrances(quiz_answers)
+
+        # Use Groq to generate the enhanced story
+        enhanced = await groq_service.enhance_story(
+            user_language=user_input.language,
+            user_name=user_input.name,
+            personality=fragrance_match["personality"],
+            fragrance_data=fragrance_match,
+        )
+
+        if enhanced and enhanced.get("status") == "success":
+            # Use the Groq-generated content
+            recommendation_data = enhanced["data"]
+        else:
+            # Fall back to the basic storyteller if Groq fails
+            base_rec = storyteller.generate_story(
+                user_name=user_input.name,
+                personality=fragrance_match["personality"],
+                fragrance_match=fragrance_match,
+            )
+            recommendation_data = base_rec
+
+        recommendation_data["closing"] = storyteller.generate_closing_message()
+
+        recommendation_data = RecommendationData(**recommendation_data)
+        return RecommendationResponse(data=recommendation_data)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating recommendation: {e}")
+
+
+@router.post(
+    "/recommend_local",
+    response_model=RecommendationResponse,
+    summary="Generate a personalized fragrance recommendation",
+)
+async def get_recommendation_local(
         user_input: UserInput,
         fragrance_matcher: FragranceMatcher = Depends(get_fragrance_matcher),
         storyteller: Storyteller = Depends(get_storyteller),
