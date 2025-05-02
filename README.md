@@ -32,8 +32,14 @@ preferences.
 2. Create a virtual environment: `python -m venv venv`
 3. Activate it: `source venv/bin/activate` (Linux/Mac) or `venv\Scripts\activate` (Windows)
 4. Install dependencies: `pip install -r requirements.txt`
-5. Create a `.env` file with your Groq API key: `GROQ_API_KEY=your_key_here` and LLM Model:
-   `LLM_MODEL_NAME="Your LLM name"`
+5. Create a `.env` file based on the example:
+
+#
+
+    GROQ_API_KEY=YOUR_API_KEY
+    LLM_MODEL_NAME="YOUR_LLM_NAME" (Ex: meta-llama/llama-4-maverick-17b-128e-instruct)
+    LLM_TEMPERATURE=0.3
+
 6. Run the server: `uvicorn app.main:app --reload`
 
 ### API Documentation
