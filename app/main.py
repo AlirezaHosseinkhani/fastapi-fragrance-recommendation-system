@@ -1,7 +1,7 @@
 import logging
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 from app.routers import recommendations
 
@@ -30,7 +30,11 @@ app.add_middleware(
 # Include routers
 app.include_router(recommendations.router)
 
-
 @app.get("/")
 async def root():
     return {"message": "Welcome to Shuts By L'dora API. Use /api/welcome to start."}
+
+# Run server programmatically
+if __name__ == "__main__":
+    
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

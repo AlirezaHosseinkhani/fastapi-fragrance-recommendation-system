@@ -9,11 +9,15 @@ class QuizAnswer(BaseModel):
     scent_families: List[str] = Field(..., description="Preferred scent families")
     wear_time: str = Field(..., description="When the scent will be worn")
     season: str = Field(..., description="Preferred season or climate")
-    feeling: str = Field(..., description="How user wants to feel when wearing it")
+    # feeling: str = Field(..., description="How user wants to feel when wearing it")
+    feeling: List[str] = Field(..., description="How user wants to feel when wearing it")
     inspiration: Optional[str] = Field(..., description="Inspirational imagery or memory")
     message: Optional[str] = Field(None, description="Free-text message to perfumer")
     strength: Optional[str] = Field(..., description="Desired strength and longevity")
 
+
+class LanguageInput(BaseModel):
+    language: str = Field(..., description="User's language")
 
 class UserInput(BaseModel):
     language: str = Field(..., description="User's language")
