@@ -46,7 +46,10 @@ class GroqService:
             - Mood evoked: {', '.join(mood if isinstance(mood, list) else [mood])}
 
             The response must be a JSON object with these keys:
-            1. greeting: A poetic introduction that celebrates their personality and invites them into the story.
+            1. greeting: A poetic introduction that celebrates their personality and invites them into the story.Begin the first paragraph explicitly with the user's name.
+            Then write two or three sentences that poetically and insightfully describe the user's personality and essence, based on the answers they’ve provided.
+            This introduction must establish a luxurious emotional connection and feel warm, elegant, and rich in sensory language.
+            Avoid generic compliments—make each line tailored and immersive.
             2. fragrance_trio: A dictionary with three keys (anchor, mixer, accent), each describing:
                 - name: the fragrance name (from the inputs)
                 - description: 2--3 sentences capturing the mood and personality of each fragrance
