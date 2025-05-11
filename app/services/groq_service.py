@@ -46,16 +46,16 @@ class GroqService:
             - Mood evoked: {', '.join(mood if isinstance(mood, list) else [mood])}
 
             The response must be a JSON object with these keys:
-            1. greeting: A poetic introduction that celebrates their personality and invites them into the story.Begin the first paragraph explicitly with the user's name.
-            Then write two or three sentences that poetically and insightfully describe the user's personality and essence, based on the answers they’ve provided.
-            This introduction must establish a luxurious emotional connection and feel warm, elegant, and rich in sensory language.
-            Avoid generic compliments—make each line tailored and immersive.
+            1. greeting: A poetic introduction that celebrates their personality and invites them into the story. Begin the first paragraph explicitly with the user's name.
+               Then write two or three sentences that poetically and insightfully describe the user's personality and essence, based on the answers they've provided.
+               This introduction must establish a luxurious emotional connection and feel warm, elegant, and rich in sensory language.
+               Avoid generic compliments--make each line tailored and immersive.
             2. fragrance_trio: A dictionary with three keys (anchor, mixer, accent), each describing:
                 - name: the fragrance name (from the inputs)
                 - description: 2--3 sentences capturing the mood and personality of each fragrance
             3. layering_recipes: A list of two blend options. Each recipe must include:
                 - name: a poetic name for the blend
-                - composition: {{"{main_sku}": "2 shuts", "{secondary_skus[0]}": "1 shut"}} format
+                - composition: a dictionary showing how many shuts of each fragrance to use, with values between 1-3 shuts., such as {{"{main_sku}": "1 shut of {main_sku}", "{secondary_skus[0]}": "2 shuts of {secondary_skus[0]}"}}
                 - result: a short poetic summary of the final impression this blend gives
             4. closing_line: A luxurious, elegant sentence that closes the story and makes the user feel special.
 

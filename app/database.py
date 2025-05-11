@@ -90,13 +90,6 @@ FRAGRANCE_DATABASE = {
         "best_for": ["night", "evening", "winter"],
         "personality_match": ["mysterious", "bold", "intense"]
     },
-    "Violet Leaf": {
-        "notes": ["Violet Leaf", "Plum", "Olibanum", "Geranium", "Coal Tar"],
-        "groups": ["GREENS, HERBS AND FOUGERES", "FRUITS, VEGETABLES AND NUTS", "RESINS AND BALSAMS", "FLOWERS"],
-        "character": ["green", "fresh", "fruity", "unique"],
-        "best_for": ["daytime", "spring"],
-        "personality_match": ["minimalist", "unique", "fresh"]
-    },
     "Tonka Sage": {
         "notes": ["Beeswax", "Musk", "Clary Sage", "Iris", "Tonka Bean", "Sandalwood"],
         "groups": ["MUSK, AMBER, ANIMALIC SMELLS", "GREENS, HERBS AND FOUGERES", "FLOWERS", "SPICES",
