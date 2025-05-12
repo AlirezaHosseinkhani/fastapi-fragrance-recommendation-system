@@ -78,29 +78,34 @@ class GroqRecommender:
                     "name": sku_name,
                     "notes": ", ".join(sku_data["notes"]),
                     "groups": ", ".join(sku_data["groups"]),
-                    # "notes": ", ".join(sku_data["notes"][:5]),  # Top 5 notes
-                    # "groups": ", ".join(sku_data["groups"][:3]),  # Top 3 groups
                     "character": ", ".join(sku_data["character"]),
                     "best_for": ", ".join(sku_data["best_for"]),
                     "personality_match": ", ".join(sku_data["personality_match"])
                 }
                 db_summary.append(summary)
 
-            system_prompt = """
+            # List of limited fragrances
+            limited_fragrances = ["Ocean Rose", "Passion Orchid", "Citrus Blossom", "Moonlight Blossom"]
+
+            system_prompt = f"""
             You are an expert fragrance consultant for Shuts By L'dora. Your job is to match customers 
             with the perfect fragrances based on their quiz answers and personality type. 
             Analyze their preferences carefully and select the best main fragrance and two complementary 
             secondary fragrances that would work well together.
 
+            IMPORTANT RESTRICTION: From this list of fragrances: {", ".join(limited_fragrances)}, 
+            include a maximum of ONE fragrance in your entire recommendation (either as main_sku OR 
+            in secondary_skus, but not both) and skip them to the next offer if exist. The rest of your selections must be from next related fragrances.
+
             Return your recommendation as a valid JSON object with these exact fields:
-            {
+            {{
                 "main_sku": "Name of main fragrance",
                 "secondary_skus": ["Secondary1", "Secondary2"],
                 "main_notes": ["Note1", "Note2", "Note3"],
                 "best_wearing_time": "When to wear it",
                 "ideal_season": "Best season",
                 "mood": ["Mood1", "Mood2", "Mood3"]
-            }
+            }}
             """
 
             user_prompt = f"""
@@ -120,6 +125,9 @@ class GroqRecommender:
 
             Choose one main fragrance that best matches their personality and preferences.
             Then select two secondary fragrances that complement the main one and provide variety.
+
+            REMEMBER: From the fragrances "Ocean Rose", "Passion Orchid", "Citrus Blossom", and "Moonlight Blossom",
+            include at most ONE in your entire recommendation (either as main or secondary, not both).
 
             Return only a JSON object with these fields:
             - main_sku: The name of the main fragrance
@@ -144,6 +152,46 @@ class GroqRecommender:
             content = response.choices[0].message.content
             recommendation = json.loads(content)
 
+            # Validate the recommendation against limited fragrances
+            limited_count = 0
+
+            if recommendation["main_sku"] in limited_fragrances:
+                limited_count += 1
+
+            for sku in recommendation["secondary_skus"]:
+                if sku in limited_fragrances:
+                    limited_count += 1
+
+            # If more than one limited fragrance is included, retry or correct
+            if limited_count > 1:
+                # Filter to keep at most one limited fragrance
+                limited_found = False
+
+                if recommendation["main_sku"] in limited_fragrances:
+                    limited_found = True
+
+                filtered_secondary = []
+                for sku in recommendation["secondary_skus"]:
+                    if sku in limited_fragrances:
+                        if not limited_found:
+                            filtered_secondary.append(sku)
+                            limited_found = True
+                        # Skip this limited fragrance as we already have one
+                    else:
+                        filtered_secondary.append(sku)
+
+                # If we need to add more fragrances to get back to 2 secondary SKUs
+                while len(filtered_secondary) < 2:
+                    # Add a fallback fragrance not in the limited list
+                    fallback_options = ["Night Light", "Rose Wood", "Amber Dusk", "Velvet Musk"]
+                    for option in fallback_options:
+                        if option not in filtered_secondary and option != recommendation["main_sku"]:
+                            filtered_secondary.append(option)
+                            break
+
+                # Update the recommendation
+                recommendation["secondary_skus"] = filtered_secondary[:2]  # Ensure exactly 2
+
             # Add personality to the result
             recommendation["personality"] = personality
 
@@ -155,7 +203,7 @@ class GroqRecommender:
             fallback = {
                 "personality": "elegant",
                 "main_sku": "Night Light",
-                "secondary_skus": ["Rose Wood", "Ocean Rose"],
+                "secondary_skus": ["Rose Wood", "Amber Dusk"],
                 "main_notes": ["Rosewood", "Cinnamon", "Rose"],
                 "best_wearing_time": "evening",
                 "ideal_season": "winter",

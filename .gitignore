@@ -6,6 +6,7 @@ __pycache__/
 .venv/
 venv/
 *.sqlite3
+recommendations_history.json
 
 # VSCode or IDEs
 .vscode/

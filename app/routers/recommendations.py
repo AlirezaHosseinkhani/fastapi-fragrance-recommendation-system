@@ -1,6 +1,7 @@
 # app/services/recommendation.py
 
 from typing import Dict
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -8,12 +9,17 @@ from app.models import LanguageInput, UserInput, RecommendationResponse, Recomme
 from app.services.fragrance_matcher import FragranceMatcher
 from app.services.groq_recommender import GroqRecommender
 from app.services.groq_service import GroqService
+from app.services.recommendation_tracker import RecommendationTracker
 from app.services.storytelling import Storyteller
 
 router = APIRouter(
     prefix="/api",
     tags=["recommendations"]
 )
+
+
+def get_recommendation_tracker():
+    return RecommendationTracker()
 
 
 def get_groq_service():
@@ -31,6 +37,7 @@ def get_storyteller():
 def get_fragrance_matcher():
     return FragranceMatcher()
 
+
 WELCOME_MESSAGES = {
     "English": "Welcome to Shuts By L'dora. May I ask you a few questions to begin crafting your signature blend?",
     "Persian": "به شاتس بای لدورا خوش آمدید. می‌توانم چند سوال بپرسم تا ترکیب خاص شما را بسازم؟"
@@ -42,20 +49,23 @@ QUIZ_QUESTIONS = {
             "id": "scent_aura",
             "question": "Which words describe your ideal scent aura?",
             "type": "multiple",
-            "options": ["Bold", "Mysterious", "Playful", "Elegant", "Seductive", "Fresh", "Warm", "Minimalist", "Exotic"],
+            "options": ["Bold", "Mysterious", "Playful", "Elegant", "Seductive", "Fresh", "Warm", "Minimalist",
+                        "Exotic"],
             "max_selections": 3
         },
         {
             "id": "mood",
             "question": "What mood do you seek from your blend?",
             "type": "single",
-            "options": ["Energetic and Uplifting", "Deep and Mysterious", "Cozy and Comforting", "Sophisticated and Powerful", "Free-spirited and Playful", "Romantic and Dreamy"]
+            "options": ["Energetic and Uplifting", "Deep and Mysterious", "Cozy and Comforting",
+                        "Sophisticated and Powerful", "Free-spirited and Playful", "Romantic and Dreamy"]
         },
         {
             "id": "scent_families",
             "question": "Which scent families attract you the most?",
             "type": "multiple",
-            "options": ["Fruity", "Floral", "Woody", "Spicy", "Musky", "Fresh/Green", "Sweet/Gourmand", "Resinous/Amber"],
+            "options": ["Fruity", "Floral", "Woody", "Spicy", "Musky", "Fresh/Green", "Sweet/Gourmand",
+                        "Resinous/Amber"],
             "max_selections": 3
         },
         {
@@ -118,32 +128,37 @@ QUIZ_QUESTIONS = {
             "id": "mood",
             "question": "دوست دارید عطرتان چه حسی را القا کند؟",
             "type": "single",
-            "options": ["پرانرژی / روحیه‌بخش", "گرم و دلنشین", "اغواگر / فریبنده", "آرامش‌بخش", "بااعتمادبه‌نفس / قدرت‌بخش"]
+            "options": ["پرانرژی / روحیه‌بخش", "گرم و دلنشین", "اغواگر / فریبنده", "آرامش‌بخش",
+                        "بااعتمادبه‌نفس / قدرت‌بخش"]
         },
         {
             "id": "scent_families",
             "question": "کدام دسته از رایحه‌ها را بیشتر دوست دارید؟",
             "type": "multiple",
-            "options": ["میوه‌ای و مرکباتی", "گلی و تازه", "چوبی و خاکی", "ادویه‌ای و شرقی", "شیرین و خوراکی (گورماند)", "سبز و گیاهی", "دریایی و ملایم (بوی رخت‌های تازه‌شسته)"],
+            "options": ["میوه‌ای و مرکباتی", "گلی و تازه", "چوبی و خاکی", "ادویه‌ای و شرقی", "شیرین و خوراکی (گورماند)",
+                        "سبز و گیاهی", "دریایی و ملایم (بوی رخت‌های تازه‌شسته)"],
             "max_selections": 3
         },
         {
             "id": "wear_time",
             "question": "این عطر را بیشتر در چه زمانی استفاده خواهید کرد؟",
             "type": "single",
-            "options": ["روز (محیط کاری یا استفاده روزمره)", "شب / مهمانی", "همه‌کاره (در تمام طول روز)", "موقعیت‌های خاص"]
+            "options": ["روز (محیط کاری یا استفاده روزمره)", "شب / مهمانی", "همه‌کاره (در تمام طول روز)",
+                        "موقعیت‌های خاص"]
         },
         {
             "id": "season",
             "question": "حال‌وهوای کدام فصل بیشتر با سلیقه‌ شما سازگار است؟",
             "type": "single",
-            "options": ["بهار (سبک و گلی)", "تابستان (درخشان و مرکباتی)", "پاییز (گرم و ادویه‌ای)", "زمستان (غنی و دودی)"]
+            "options": ["بهار (سبک و گلی)", "تابستان (درخشان و مرکباتی)", "پاییز (گرم و ادویه‌ای)",
+                        "زمستان (غنی و دودی)"]
         },
         {
             "id": "feeling",
             "question": "هنگام استفاده از این عطر، دوست دارید چه احساسی داشته باشید؟",
             "type": "multiple",
-            "options": ["بااعتمادبه‌نفس", " احساسی / اغواگر", "شاد و سرحال", "آرام و ریلکس", "باطراوت و سرزنده", "راحت و آرامش‌یافته","خاص و متفاوت","قدرتمند و تأثیرگذار"],
+            "options": ["بااعتمادبه‌نفس", " احساسی / اغواگر", "شاد و سرحال", "آرام و ریلکس", "باطراوت و سرزنده",
+                        "راحت و آرامش‌یافته", "خاص و متفاوت", "قدرتمند و تأثیرگذار"],
             "max_selections": 2
         },
         {
@@ -156,7 +171,7 @@ QUIZ_QUESTIONS = {
                 "بازار پر از ادویه و رنگ",
                 "باغ گل‌های شکوفه‌زده در بهار",
                 "خیابان بارانی شبانه با نورهای خیس",
-               "جشن شبانه‌ی پر از موسیقی و نور",
+                "جشن شبانه‌ی پر از موسیقی و نور",
                 "پیاده‌روی در جنگل مرطوب و سبز",
                 "صبح آفتابی در یک مزرعه‌ی پرتقال"
             ]
@@ -181,7 +196,6 @@ QUIZ_QUESTIONS = {
 }
 
 
-
 @router.post("/welcome", response_model=Dict[str, str])
 async def welcome(language_input: LanguageInput):
     message = WELCOME_MESSAGES.get(language_input.language, WELCOME_MESSAGES["English"])
@@ -193,6 +207,7 @@ async def get_quiz_questions(language_input: LanguageInput):
     questions = QUIZ_QUESTIONS.get(language_input.language, QUIZ_QUESTIONS["English"])
     return {"questions": questions}
 
+
 @router.post(
     "/recommend",
     response_model=RecommendationResponse,
@@ -203,9 +218,11 @@ async def get_recommendation(
         groq_recommender: GroqRecommender = Depends(get_groq_recommender),
         groq_service: GroqService = Depends(get_groq_service),
         storyteller: Storyteller = Depends(get_storyteller),
+        tracker: RecommendationTracker = Depends(get_recommendation_tracker),
 ):
     """Generate a personalized fragrance recommendation with Groq-enhanced matching and storytelling"""
     try:
+        user_id = user_input.user_id if hasattr(user_input, 'user_id') else str(uuid4())
         # Convert Pydantic model to dict
         quiz_answers = user_input.quiz_answers.dict()
 
@@ -233,6 +250,8 @@ async def get_recommendation(
             recommendation_data = base_rec
 
         recommendation_data["closing"] = storyteller.generate_closing_message()
+
+        tracker.add_recommendation(user_id, fragrance_match)
 
         recommendation_data = RecommendationData(**recommendation_data)
         return RecommendationResponse(data=recommendation_data)
