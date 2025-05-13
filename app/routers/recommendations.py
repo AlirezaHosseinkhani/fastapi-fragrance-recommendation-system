@@ -4,7 +4,9 @@ from typing import Dict
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
+from app.model.db import get_db
 from app.models import LanguageInput, UserInput, RecommendationResponse, RecommendationData
 from app.services.fragrance_matcher import FragranceMatcher
 from app.services.groq_recommender import GroqRecommender
@@ -18,8 +20,8 @@ router = APIRouter(
 )
 
 
-def get_recommendation_tracker():
-    return RecommendationTracker()
+def get_recommendation_tracker(db: Session = Depends(get_db)):
+    return RecommendationTracker(db)
 
 
 def get_groq_service():
@@ -307,3 +309,18 @@ async def get_recommendation_local(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating recommendation: {e}")
+
+
+@router.get(
+    "/recommendations",
+    summary="Get all stored recommendations",
+)
+async def get_all_recommendations(
+        tracker: RecommendationTracker = Depends(get_recommendation_tracker),
+):
+    """Retrieve all stored fragrance recommendations"""
+    try:
+        recommendations = tracker.get_all_recommendations()
+        return {"data": recommendations}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving recommendations: {e}")

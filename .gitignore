@@ -14,3 +14,6 @@ recommendations_history.json
 
 # OS files
 .DS_Store
+
+# Database
+recommendations.db
